@@ -1,46 +1,44 @@
+##VA RULA PE SERVERUL VCODERS
+
 import socket
-import threading
+import time
+import sys
+import os
 
-HEADER = 64
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from auxiliary_functions import *
+
+if len(sys.argv) != 2:
+    print("INVALID NUMBER OF ARGUMENTS")
+    exit()
+
+filename = sys.argv[1]
+EVAL_REQUEST_MESSAGE = "!EVALUATE!"
 PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname() + ".local")
-ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
+MIDDLE = socket.gethostbyname(socket.gethostname() + ".local")
+ADDR = (MIDDLE, PORT)
 DISSCONNECT_MESSAGE = "!DISCONNECT!"
+OVER_MESSAGE = "!OVER!"
+FORMAT = 'utf-8'
 
 
-IP_WHITELIST = [ # MAYBE ADD IT IDK
-    SERVER
-]
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
-
-def handle_worker(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
-
-    connected = True
-    while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DISSCONNECT_MESSAGE:
-                connected = False
-            print(f"[{addr}], {msg}")
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connected = False
+while not connected:
+    try:
+        client.connect(ADDR)
+        connected = True
+    except:
+        print(f"COULDN'T CONNECT TO MIDDLE [{ADDR}]")
+        time.sleep(2)
+        connected = False
 
 
-def start():
-    server.listen()
-    print(f"[LISTENING] Server is listening on {ADDR}")
-    while True:
-        conn, addr = server.accept()
-        #if addr[0] in IP_WHITELIST:
-        thread = threading.Thread(target = handle_worker, args = (conn, addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+send_msg(EVAL_REQUEST_MESSAGE, client, True)
+
+send_file(filename, client)
 
 
+client.close()
 
-print("[STARTING] server is starting")
-start()

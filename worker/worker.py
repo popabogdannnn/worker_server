@@ -1,4 +1,8 @@
+##VA RULA PE CALULCATOARELE CARE EVALUEAZA WORKER
+
 import socket
+import time
+
 
 HEADER = 64
 PORT = 5050
@@ -6,7 +10,9 @@ SERVER = socket.gethostbyname(socket.gethostname() + ".local")
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISSCONNECT_MESSAGE = "!DISCONNECT!"
+WORKER_MESSAGE = "!WORKER!"
 
+start = time.time()
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
