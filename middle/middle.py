@@ -7,9 +7,14 @@ import threading
 from types import BuiltinFunctionType
 import sys
 import os
+import time
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+mutex = threading.Lock()
+
 from auxiliary_functions import *
+
 HEADER = 64
 EVAL_REQUEST_MESSAGE = "!EVALUATE!"
 PORT = 5050
@@ -21,10 +26,13 @@ WORKER_MESSAGE = "!WORKER!"
 OVER_MESSAGE = "!OVER!"
 BUFFER_SIZE = 512 * 1024
 SEND_FILE_MESSAGE = "!SEND_FILE!"
-
+SLEEP_TIME = 0.3 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
 IP_WHITELIST = [ # MAYBE ADD IT IDK
     SERVER
 ]
+
+job_queue = []
+finished_jobs = set()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -47,17 +55,46 @@ def handle_worker(conn, addr):
     print(f"[{addr}] WORKER connected.")
     connected = True
     while connected:
-        msg = recv_message(conn, addr)
+        msg = receive_msg(conn, addr)
         if msg == DISSCONNECT_MESSAGE:
             connected = False
-        print(f"[{addr}], {msg}")
+        if msg == SEND_FILE_MESSAGE:
+            filename = receive_file(conn)
+            mutex.acquire()
+            finished_jobs.add(filename)
+            mutex.release()
+    print(f"[{addr}] WORKER connected.")
+
     
 
 def handle_evaluation_request(conn, addr):
-    print(f"[{addr}] is evaluating")
+    #print(f"[{addr}] is evaluating")
     msg = receive_msg(conn, True)
-    receive_file(conn)
-    print(f"[{addr}] done")
+    filename = receive_file(conn)
+    
+    mutex.acquire()
+    job_queue.append(filename)
+    mutex.release()
+    
+    finished_filename = filename.split(".")[0] + ".json"
+
+    found = False
+    start = time.time()
+    while not found:
+        mutex.acquire()
+        if finished_filename in finished_jobs:
+            found = True
+        mutex.release()
+        time.sleep(SLEEP_TIME)
+        if(time.time() - start > 30):
+            start = time.time()
+            print("CAN'T FIND JOB " + finished_filename)
+    
+    finished_jobs.remove(finished_filename)
+
+    send_file(finished_filename, conn)
+
+    #print(f"[{addr}] done")
 
 
 def start():

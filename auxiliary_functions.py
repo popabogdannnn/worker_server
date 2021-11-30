@@ -50,5 +50,6 @@ def receive_file(conn):
             file.write(file_part)
             size += len(file_part)
             file_part = receive_msg(conn)
+    return filename
         
             
