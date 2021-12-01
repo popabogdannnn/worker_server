@@ -4,23 +4,73 @@ import socket
 import time
 import sys
 import os
+import threading
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from auxiliary_functions import *
 
-HEADER = 64
+mutex = threading.Lock()
+
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname() + ".local")
 ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISSCONNECT_MESSAGE = "!DISCONNECT!"
-WORKER_MESSAGE = "!WORKER!"
 
-start = time.time()
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDR)
+
+job_queue = []
+
+connected = False 
+while not connected:
+    try:
+        client.connect(ADDR)
+        connected = True
+    except:
+        print(f"COULDN'T CONNECT TO MIDDLE [{ADDR}]")
+        time.sleep(2)
+        connected = False
+
+send_msg(WORKER_MESSAGE, client, True)
+
+def notify_connection(conn):
+    while(True):
+        mutex.acquire()
+        send_msg(STILL_CONNECTED_MESSAGE, conn, True)
+        mutex.release()
+        time.sleep(0.01)
 
 
+def handle_eval():
+    
+    while(True):
+        mutex.acquire()
+        curr_job = None
+        if(len(job_queue) != 0):
+            curr_job = job_queue.pop(0)
+        mutex.release()
+        if(curr_job):
+            os.system("mv " + curr_job + " eval/submission.zip")
+            os.chdir("eval/")
+            os.system("./run_eval.sh")
+            os.chdir("../")
+            os.system("")
+
+end_connection_thread = threading.Thread(target = notify_connection, args = [client])
+end_connection_thread.start()
+
+evaluation_thread = threading.Thread(target = handle_eval, args = ())
+evaluation_thread.start()
+
+while(connected):
+    msg = receive_msg(client, True)
+   # print(msg)
+    if(msg == SEND_FILE_MESSAGE):
+        filename = receive_file(client)
+        #print("FILE RECEIVED")
+        mutex.acquire()
+        job_queue.append(filename)
+        mutex.release()
+    
+send_msg(DISSCONNECT_MESSAGE)
 
 client.close()

@@ -16,16 +16,16 @@ mutex = threading.Lock()
 from auxiliary_functions import *
 
 HEADER = 64
-EVAL_REQUEST_MESSAGE = "!EVALUATE!"
+
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname() + ".local")
 ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISSCONNECT_MESSAGE = "!DISCONNECT!"
-WORKER_MESSAGE = "!WORKER!"
-OVER_MESSAGE = "!OVER!"
+
+
+
+
 BUFFER_SIZE = 512 * 1024
-SEND_FILE_MESSAGE = "!SEND_FILE!"
+
 SLEEP_TIME = 0.3 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
 IP_WHITELIST = [ # MAYBE ADD IT IDK
     SERVER
@@ -54,16 +54,28 @@ def handle_connection(conn, addr):
 def handle_worker(conn, addr):
     print(f"[{addr}] WORKER connected.")
     connected = True
-    while connected:
-        msg = receive_msg(conn, addr)
-        if msg == DISSCONNECT_MESSAGE:
-            connected = False
-        if msg == SEND_FILE_MESSAGE:
-            filename = receive_file(conn)
+    conn.settimeout(WORKER_TIMEOUT)
+    try:
+        while connected:
+            msg = receive_msg(conn, addr)
+            if msg == DISSCONNECT_MESSAGE:
+                connected = False
+            if(msg == STILL_CONNECTED_MESSAGE):
+                pass
+            if msg == SEND_FILE_MESSAGE:
+                filename = receive_file(conn)
+                mutex.acquire()
+                finished_jobs.add(filename)
+                mutex.release()
             mutex.acquire()
-            finished_jobs.add(filename)
+            if(len(job_queue) != 0):
+                job_name = job_queue.pop(0)
+                send_file(job_name, conn)
+               # print("FILE SENT")
+                os.system("rm " + job_name)
             mutex.release()
-    print(f"[{addr}] WORKER connected.")
+    finally:
+        print(f"[{addr}] WORKER disconnected.")
 
     
 
@@ -94,7 +106,7 @@ def handle_evaluation_request(conn, addr):
 
     send_file(finished_filename, conn)
 
-    #print(f"[{addr}] done")
+    print(f"[{addr}] done")
 
 
 def start():

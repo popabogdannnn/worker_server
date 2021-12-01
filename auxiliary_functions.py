@@ -1,12 +1,16 @@
 import os
 
-
-
 FORMAT = 'utf-8'
-HEADER = 64
+HEADER = 32
 SEND_FILE_MESSAGE = "!SEND_FILE!"
 OVER_MESSAGE = "!OVER!"
+WORKER_MESSAGE = "!WORKER!"
 BUFFER_SIZE = 512 * 1024
+FORMAT = 'utf-8'
+EVAL_REQUEST_MESSAGE = "!EVALUATE!"
+DISSCONNECT_MESSAGE = "!DISCONNECT!"
+STILL_CONNECTED_MESSAGE = "!STILL_HERE!"
+WORKER_TIMEOUT = 120
 
 def send_msg(msg, conn, needs_encode = False):
     if(needs_encode):
@@ -41,15 +45,17 @@ def send_file(filename, conn):
 
 def receive_file(conn):
     filename = receive_msg(conn, True)
+   # print(filename)
     file_size = int(receive_msg(conn, True)) 
+    #print(file_size)
     with open(filename, "wb") as file:
-        file_part = receive_msg(conn)
         size = 0
         while size < file_size:
-            #print(file_part)
+            file_part = receive_msg(conn)
             file.write(file_part)
             size += len(file_part)
-            file_part = receive_msg(conn)
+    #        print("SIZE until now: ", size)
+            
     return filename
         
             
