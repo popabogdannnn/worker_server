@@ -40,7 +40,7 @@ def notify_connection(conn):
         time.sleep(0.01)
 
 
-def handle_eval():
+def handle_eval(conn):
     
     while(True):
         mutex.acquire()
@@ -53,12 +53,20 @@ def handle_eval():
             os.chdir("eval/")
             os.system("./run_eval.sh")
             os.chdir("../")
-            os.system("")
+            job_json = curr_job.split(".")[0] + ".json"
+            os.system("mv eval/" + job_json + " ./")
+            mutex.acquire()
+            send_file(job_json, conn)
+            mutex.release()
+            os.system("rm " + job_json)
+            
+
+
 
 end_connection_thread = threading.Thread(target = notify_connection, args = [client])
 end_connection_thread.start()
 
-evaluation_thread = threading.Thread(target = handle_eval, args = ())
+evaluation_thread = threading.Thread(target = handle_eval, args = [client])
 evaluation_thread.start()
 
 while(connected):

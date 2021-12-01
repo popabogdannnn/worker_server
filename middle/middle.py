@@ -71,7 +71,6 @@ def handle_worker(conn, addr):
             if(len(job_queue) != 0):
                 job_name = job_queue.pop(0)
                 send_file(job_name, conn)
-               # print("FILE SENT")
                 os.system("rm " + job_name)
             mutex.release()
     finally:
@@ -88,6 +87,8 @@ def handle_evaluation_request(conn, addr):
     job_queue.append(filename)
     mutex.release()
     
+    #print(job_queue)
+
     finished_filename = filename.split(".")[0] + ".json"
 
     found = False
@@ -105,6 +106,7 @@ def handle_evaluation_request(conn, addr):
     finished_jobs.remove(finished_filename)
 
     send_file(finished_filename, conn)
+    os.system("rm " + finished_filename)
 
     print(f"[{addr}] done")
 
