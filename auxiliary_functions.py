@@ -10,7 +10,7 @@ FORMAT = 'utf-8'
 EVAL_REQUEST_MESSAGE = "!EVALUATE!"
 DISSCONNECT_MESSAGE = "!DISCONNECT!"
 STILL_CONNECTED_MESSAGE = "!STILL_HERE!"
-WORKER_TIMEOUT = 120
+WORKER_TIMEOUT = 180
 
 def send_msg(msg, conn, needs_encode = False):
     if(needs_encode):

@@ -4,9 +4,10 @@ from compile import *
 from run_sandbox import *
 from run_checker import *
 from auxiliary_functions import *
+import time
 
 if (len(sys.argv) != 2):
-    print("INVALID NUMBER OF ARGUMENTS")
+    print("NUMAR INVALID DE ARGUMENTE")
     exit()
 
 instance_name = sys.argv[1]
@@ -35,22 +36,41 @@ stack_memory = submission_data["stack_memory"]
 execution_time = submission_data["execution_time"]
 checker = submission_data["checker"]
 
+#start = time.time()
 compilation_result = compile(code_file_name, executable_file_name, submission_data["compiler_type"], instance_name)
+
+#print(time.time() - start)
+
+if(checker):
+    checker_compilation_result = compile("checker.cpp", "checker", checker, instance_name)
+
 
 #print(compilation_result)
 
 eval_json = {
     "submission_id" : submission_id,
     "compilation": {
-    }
+    },
+    "checker-compilation": {
+
+    } 
 }
 
+if(checker):
+    eval_json["checker-compilation"]["warnings"] = checker_compilation_result["warnings"]
+    if(checker_compilation_result["result"] == "fail"):
+        eval_json["checker-compilation"]["compilation"] = "Eroare de compilare la checker!"
+    else:
+        eval_json["checker-compilation"]["compilation"] = "success"
 eval_json["compilation"]["warnings"] = copy.deepcopy(compilation_result["warnings"])
+
 
 if compilation_result["result"] == "fail":
     eval_json["compilation"]["error"] = "Eroare de compilare!"
+elif checker and checker_compilation_result["result"] == "fail":
+    pass
 else:
-
+    
     eval_json["compilation"]["error"] = "success"
     test_lines = read_file("tests/tests.txt").split("\n")
 
@@ -80,8 +100,6 @@ else:
             os.system("cp tests/" + in_file_tests + " " + CHECKER_JAIL + "/" + in_file)
             os.system("cp tests/" + ok_file_tests + " " + CHECKER_JAIL + "/" + ok_file)
             os.system("rm "+ CHECKER_JAIL + "/" + executable_file_name)
-            #os.system("cp checker " + CHECKER_JAIL + "/checker")
-            # !!! DE IMPLEMENTAT USER CHECKER
             checker_res = run_checker(in_file, out_file, ok_file, execution_time, checker, instance_name)
             test_summary["verdict"] = {
                 "points_awarded" : checker_res["p"] / 100 * points,
@@ -106,8 +124,10 @@ os.system("rm " + code_file_name)
 if compilation_result["result"] == "success":
     os.system("rm " + executable_file_name)
 if checker:
+    os.system("rm checker.cpp")
     os.system("rm checker")
 os.system("rm -rf user_checker/*")
 os.system("rm -rf tests/*")
 os.system("rm submission_data.json")
+
 

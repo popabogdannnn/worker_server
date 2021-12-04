@@ -1,16 +1,9 @@
 import os
 from auxiliary_functions import *
 
-COMPILE_MEMORY = 128 #in megabytes
+COMPILE_MEMORY = 512 #in megabytes
 COMPILE_TIME = 10 #in seconds
 COMPILE_WALL_TIME = COMPILE_TIME + 2 #in seconds
-
-compiler_commands = {
-    "c32": "usr/bin/gcc -- -m32 -Wall -static -O2 -std=c11 main.c -o main -lm",
-    "c64": "usr/bin/gcc -- -m64 -Wall -static -O2 -std=c11 main.c -o main -lm",
-    "c++32": "usr/bin/g++ -- -m32 -Wall -static -O2 -std=c++14 main.cpp -o main -lm",
-    "c++64": "usr/bin/g++ -- -m64 -Wall -static -O2 -std=c++14 main.cpp -o main -lm"
-}
 
 compiler_dependencies = {
     "c32": ['/lib:/lib:exec',
@@ -41,6 +34,14 @@ compiler_dependencies = {
 
 
 def compile(code_file_name, executable_file_name, compiler_type, instance_name):
+
+    compiler_commands = {
+        "c32": "usr/bin/gcc -- -m32 -Wall -static -O2 -std=c11 " + code_file_name + " -o " + executable_file_name + " -lm",
+        "c64": "usr/bin/gcc -- -m64 -Wall -static -O2 -std=c11 " + code_file_name + " -o " + executable_file_name + " -lm",
+        "c++32": "usr/bin/g++ -- -m32 -Wall -static -O2 -std=c++14 " + code_file_name + " -o " + executable_file_name + " -lm",
+        "c++64": "usr/bin/g++ -- -m64 -Wall -static -O2 -std=c++14 " + code_file_name + " -o " + executable_file_name + " -lm"
+    }
+
     compile_command = compiler_commands[compiler_type]
     compiler_depency = compiler_dependencies[compiler_type]
 
@@ -49,6 +50,7 @@ def compile(code_file_name, executable_file_name, compiler_type, instance_name):
    
     os.system("rm -rf " + COMPILATION_JAIL + "/*")
     os.system("cp " + code_file_name + " "+ COMPILATION_JAIL + "/")
+   
     sandbox_command = "ia-sandbox -r " + PWD + "/" + COMPILATION_JAIL + "/ --forward-env"
     sandbox_command += " --instance-name " + instance_name
 
@@ -70,6 +72,7 @@ def compile(code_file_name, executable_file_name, compiler_type, instance_name):
     
     compilation_data = read_json("compilation_data.json")
 
+    #print(compilation_data)
     ret = {
         "result" : "fail",
         "warnings" : read_file("compile_warnings") 

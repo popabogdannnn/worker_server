@@ -49,6 +49,7 @@ def handle_eval(conn):
             curr_job = job_queue.pop(0)
         mutex.release()
         if(curr_job):
+            #start = time.time()
             os.system("mv " + curr_job + " eval/submission.zip")
             os.chdir("eval/")
             os.system("./run_eval.sh")
@@ -59,6 +60,7 @@ def handle_eval(conn):
             send_file(job_json, conn)
             mutex.release()
             os.system("rm " + job_json)
+           # print(time.time() - start)
             
 
 
