@@ -16,6 +16,8 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 job_queue = []
 
+evaluating = False
+
 connected = False 
 while not connected:
     try:
@@ -31,13 +33,17 @@ send_msg(WORKER_MESSAGE, client, True)
 def notify_connection(conn):
     while(True):
         mutex.acquire()
-        send_msg(STILL_CONNECTED_MESSAGE, conn, True)
+        if(evaluating):
+            send_msg(EVALUATING_MESSAGE, conn, True)
+        else:
+            send_msg(STILL_CONNECTED_MESSAGE, conn, True)
         mutex.release()
         time.sleep(0.01)
 
 
+
 def handle_eval(conn):
-    
+    jobs = 0
     while(True):
         mutex.acquire()
         curr_job = None
@@ -46,7 +52,10 @@ def handle_eval(conn):
         mutex.release()
         if(curr_job):
             #start = time.time()
-            print("EVALUATING")
+            evaluating = True
+            print("EVALUATING : ", curr_job)
+            jobs += 1
+            print(jobs)
             os.system("mv " + curr_job + " eval/submission.zip")
             os.chdir("eval/")
             os.system("./run_eval.sh")
@@ -57,6 +66,7 @@ def handle_eval(conn):
             send_file(job_json, conn)
             mutex.release()
             os.system("rm " + job_json)
+            evaluating = False
            # print(time.time() - start)
             
 

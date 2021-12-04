@@ -17,9 +17,6 @@ from auxiliary_functions import *
 
 HEADER = 64
 
-
-
-
 BUFFER_SIZE = 512 * 1024
 
 SLEEP_TIME = 0.3 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
@@ -54,6 +51,10 @@ def handle_worker(conn, addr):
     try:
         while connected:
             msg = receive_msg(conn, addr)
+            #print(msg)
+            if(msg == ""):
+                connected = False
+                break
             if msg == DISSCONNECT_MESSAGE:
                 connected = False
             if(msg == STILL_CONNECTED_MESSAGE):
@@ -64,7 +65,7 @@ def handle_worker(conn, addr):
                 finished_jobs.add(filename)
                 mutex.release()
             mutex.acquire()
-            if(len(job_queue) != 0):
+            if(len(job_queue) != 0 and msg == STILL_CONNECTED_MESSAGE):
                 job_name = job_queue.pop(0)
                 send_file(job_name, conn)
                 os.system("rm " + job_name)
