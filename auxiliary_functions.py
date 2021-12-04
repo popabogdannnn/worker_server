@@ -1,5 +1,11 @@
 import os
 
+
+
+PORT = 5050
+#SERVER = socket.gethostbyname(socket.gethostname() + ".local")
+SERVER = "192.168.1.6"
+ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 HEADER = 32
 SEND_FILE_MESSAGE = "!SEND_FILE!"

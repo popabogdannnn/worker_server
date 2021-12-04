@@ -18,9 +18,6 @@ if len(sys.argv) != 2:
 
 filename = sys.argv[1]
 EVAL_REQUEST_MESSAGE = "!EVALUATE!"
-PORT = 5050
-MIDDLE = socket.gethostbyname(socket.gethostname() + ".local")
-ADDR = (MIDDLE, PORT)
 DISSCONNECT_MESSAGE = "!DISCONNECT!"
 OVER_MESSAGE = "!OVER!"
 FORMAT = 'utf-8'

@@ -12,10 +12,6 @@ from auxiliary_functions import *
 
 mutex = threading.Lock()
 
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname() + ".local")
-ADDR = (SERVER, PORT)
-
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 job_queue = []
@@ -50,6 +46,7 @@ def handle_eval(conn):
         mutex.release()
         if(curr_job):
             #start = time.time()
+            print("EVALUATING")
             os.system("mv " + curr_job + " eval/submission.zip")
             os.chdir("eval/")
             os.system("./run_eval.sh")

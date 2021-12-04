@@ -17,10 +17,6 @@ from auxiliary_functions import *
 
 HEADER = 64
 
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname() + ".local")
-ADDR = (SERVER, PORT)
-
 
 
 
