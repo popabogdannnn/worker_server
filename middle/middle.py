@@ -19,7 +19,7 @@ HEADER = 64
 
 BUFFER_SIZE = 512 * 1024
 
-SLEEP_TIME = 0.3 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
+SLEEP_TIME = 0.2 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
 IP_WHITELIST = [ # MAYBE ADD IT IDK
     SERVER
 ]
@@ -50,7 +50,9 @@ def handle_worker(conn, addr):
     conn.settimeout(WORKER_TIMEOUT)
     try:
         while connected:
+            mutex.acquire()
             msg = receive_msg(conn, addr)
+            mutex.release()
             #print(msg)
             if(msg == ""):
                 connected = False
@@ -60,8 +62,8 @@ def handle_worker(conn, addr):
             if(msg == STILL_CONNECTED_MESSAGE):
                 pass
             if msg == SEND_FILE_MESSAGE:
-                filename = receive_file(conn)
                 mutex.acquire()
+                filename = receive_file(conn)
                 finished_jobs.add(filename)
                 mutex.release()
             mutex.acquire()
@@ -70,6 +72,7 @@ def handle_worker(conn, addr):
                 send_file(job_name, conn)
                 os.system("rm " + job_name)
             mutex.release()
+            time.sleep(SLEEP_TIME)
     finally:
         print(f"[{addr}] WORKER disconnected.")
 
@@ -77,11 +80,10 @@ def handle_worker(conn, addr):
 
 def handle_evaluation_request(conn, addr):
     #print(f"[{addr}] is evaluating")
+    mutex.acquire()
     msg = receive_msg(conn, True)
     #print(msg)
     filename = receive_file(conn)
-    
-    mutex.acquire()
     job_queue.append(filename)
     mutex.release()
     
@@ -101,9 +103,12 @@ def handle_evaluation_request(conn, addr):
             start = time.time()
             print("CAN'T FIND JOB " + finished_filename)
     
+    
+    
+    mutex.acquire()
     finished_jobs.remove(finished_filename)
-
     send_file(finished_filename, conn)
+    mutex.release()
     os.system("rm " + finished_filename)
 
     print(f"[{addr}] done")
