@@ -1,5 +1,5 @@
 import os
-
+import socket
 
 
 PORT = 5050
@@ -29,7 +29,7 @@ def send_msg(msg, conn, needs_encode = False):
     conn.sendall(msg)
 
 def receive_msg(conn, needs_decode = False):
-    msg_length = conn.recv(HEADER)
+    msg_length = conn.recv(HEADER, socket.MSG_WAITALL)
     if(msg_length):
         msg_length = msg_length.decode(FORMAT)
         msg_length = int(msg_length)
