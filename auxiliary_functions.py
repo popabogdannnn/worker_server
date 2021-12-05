@@ -25,8 +25,8 @@ def send_msg(msg, conn, needs_encode = False):
     msg_length = str(len(msg))
     msg_length = msg_length.encode(FORMAT)
     msg_length += b' ' * (HEADER - len(msg_length))
-    conn.send(msg_length)
-    conn.send(msg)
+    conn.sendall(msg_length)
+    conn.sendall(msg)
 
 def receive_msg(conn, needs_decode = False):
     msg_length = conn.recv(HEADER)
