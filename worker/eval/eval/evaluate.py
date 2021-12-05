@@ -4,7 +4,6 @@ from compile import *
 from run_sandbox import *
 from run_checker import *
 from auxiliary_functions import *
-import time
 
 if (len(sys.argv) != 2):
     print("NUMAR INVALID DE ARGUMENTE")
@@ -36,15 +35,10 @@ stack_memory = submission_data["stack_memory"]
 execution_time = submission_data["execution_time"]
 checker = submission_data["checker"]
 
-#start = time.time()
 compilation_result = compile(code_file_name, executable_file_name, submission_data["compiler_type"], instance_name)
-
-#print(time.time() - start)
 
 if(checker):
     checker_compilation_result = compile("checker.cpp", "checker", checker, instance_name)
-
-
 #print(compilation_result)
 
 eval_json = {
@@ -64,7 +58,6 @@ if(checker):
         eval_json["checker-compilation"]["compilation"] = "success"
 eval_json["compilation"]["warnings"] = copy.deepcopy(compilation_result["warnings"])
 
-
 if compilation_result["result"] == "fail":
     eval_json["compilation"]["error"] = "Eroare de compilare!"
 elif checker and checker_compilation_result["result"] == "fail":
@@ -73,8 +66,12 @@ else:
     
     eval_json["compilation"]["error"] = "success"
     test_lines = read_file("tests/tests.txt").split("\n")
-
+    while(test_lines[-1] == ""):
+        test_lines.pop()
+    
     for line in test_lines:
+        if(line == ""):
+            continue
         line = line.split(' ')
         tag = line[0]
         points = int(line[1])

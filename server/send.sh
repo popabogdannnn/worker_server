@@ -1,4 +1,4 @@
 while :
 do
-    python3 server.py id.zip
+    python3 server.py martian_war.zip
 done

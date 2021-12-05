@@ -78,6 +78,7 @@ def handle_worker(conn, addr):
 def handle_evaluation_request(conn, addr):
     #print(f"[{addr}] is evaluating")
     msg = receive_msg(conn, True)
+    #print(msg)
     filename = receive_file(conn)
     
     mutex.acquire()

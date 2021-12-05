@@ -33,7 +33,7 @@ def receive_msg(conn, needs_decode = False):
     if(msg_length):
         msg_length = msg_length.decode(FORMAT)
         msg_length = int(msg_length)
-        msg = conn.recv(msg_length)
+        msg = conn.recv(msg_length, socket.MSG_WAITALL)
         if(needs_decode):
             msg = msg.decode(FORMAT)
         return msg
@@ -52,16 +52,16 @@ def send_file(filename, conn):
 
 def receive_file(conn):
     filename = receive_msg(conn, True)
-   # print(filename)
+    #print(filename)
     file_size = int(receive_msg(conn, True)) 
-    #print(file_size)
+   # print(file_size)
     with open(filename, "wb") as file:
         size = 0
         while size < file_size:
             file_part = receive_msg(conn)
             file.write(file_part)
             size += len(file_part)
-    #        print("SIZE until now: ", size)
+            #print("SIZE until now: ", size)
             
     return filename
         
