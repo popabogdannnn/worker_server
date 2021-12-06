@@ -53,7 +53,7 @@ def handle_worker(conn, addr):
             mutex.acquire()
             msg = receive_msg(conn, addr)
             mutex.release()
-            #print(msg)
+            print(msg)
             if(msg == ""):
                 connected = False
                 break
@@ -71,8 +71,9 @@ def handle_worker(conn, addr):
                 job_name = job_queue.pop(0)
                 send_file(job_name, conn)
                 os.system("rm " + job_name)
+                print("SENT")
             mutex.release()
-            time.sleep(SLEEP_TIME)
+            #time.sleep(SLEEP_TIME)
     finally:
         print(f"[{addr}] WORKER disconnected.")
 
@@ -99,9 +100,9 @@ def handle_evaluation_request(conn, addr):
             found = True
         mutex.release()
         time.sleep(SLEEP_TIME)
-        if(time.time() - start > 30):
+        if(time.time() - start > 60):
             start = time.time()
-            print("CAN'T FIND JOB " + finished_filename)
+           # print("CAN'T FIND JOB " + finished_filename)
     
     
     

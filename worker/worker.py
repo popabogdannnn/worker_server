@@ -33,17 +33,19 @@ send_msg(WORKER_MESSAGE, client, True)
 def notify_connection(conn):
     while(True):
         mutex.acquire()
+        print(evaluating)
         if(evaluating):
             send_msg(EVALUATING_MESSAGE, conn, True)
         else:
             send_msg(STILL_CONNECTED_MESSAGE, conn, True)
         mutex.release()
-        time.sleep(0.01)
+        time.sleep(0.02)
 
 
 
 def handle_eval(conn):
     jobs = 0
+    global evaluating
     while(True):
         mutex.acquire()
         curr_job = None
@@ -63,6 +65,7 @@ def handle_eval(conn):
             job_json = curr_job.split(".")[0] + ".json"
             os.system("mv eval/" + job_json + " ./")
             mutex.acquire()
+            print("TERMINAT")
             send_file(job_json, conn)
             mutex.release()
             os.system("rm " + job_json)
