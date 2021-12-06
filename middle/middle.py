@@ -16,7 +16,7 @@ mutex = threading.Lock()
 from auxiliary_functions import *
 
 HEADER = 64
-
+DEBUG = False
 BUFFER_SIZE = 512 * 1024
 
 SLEEP_TIME = 0.2 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
@@ -57,6 +57,7 @@ def handle_worker_out(conn, addr):
                 job_name = job_queue.pop(0)
             mutex.release()
             if(job_name != ""):
+                online_workers[addr] = "working"
                 send_file(job_name, conn)
                 os.system("rm " + job_name)
             time.sleep(SLEEP_TIME)
@@ -82,7 +83,7 @@ def handle_worker_in(conn, addr):
             if(msg == STILL_CONNECTED_MESSAGE):
                 pass
             if msg == SEND_FILE_MESSAGE:
-                filename = receive_file(conn, True)
+                filename = receive_file(conn, debug=DEBUG)
                 mutex.acquire()
                 finished_jobs.add(filename)
                 online_workers[addr] = "online"
