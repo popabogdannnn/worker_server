@@ -42,17 +42,37 @@ def handle_connection(conn, addr):
     if msg == EVAL_REQUEST_MESSAGE:
         handle_evaluation_request(conn, addr)
     if msg == WORKER_MESSAGE:
-        handle_worker(conn, addr)
+        handle_worker_in(conn, addr)
 
-def handle_worker(conn, addr):
+online_workers = {
+
+}
+
+def handle_worker_out(conn, addr):
+    while(online_workers[addr] != "offline"):
+        if(online_workers[addr] == "online"):
+            mutex.acquire()
+            job_name = ""
+            if(len(job_queue) != 0):
+                job_name = job_queue.pop(0)
+            mutex.release()
+            if(job_name != ""):
+                send_file(job_name, conn)
+                os.system("rm " + job_name)
+            time.sleep(SLEEP_TIME)
+
+
+def handle_worker_in(conn, addr):
     print(f"[{addr}] WORKER connected.")
+    online_workers[addr] = "online"
+    print(online_workers)
     connected = True
     conn.settimeout(WORKER_TIMEOUT)
+    thread_out = threading.Thread(target = handle_worker_out, args = (conn, addr))
+    thread_out.start()
     try:
         while connected:
-            mutex.acquire()
             msg = receive_msg(conn, addr)
-            mutex.release()
             print(msg)
             if(msg == ""):
                 connected = False
@@ -62,20 +82,19 @@ def handle_worker(conn, addr):
             if(msg == STILL_CONNECTED_MESSAGE):
                 pass
             if msg == SEND_FILE_MESSAGE:
-                mutex.acquire()
                 filename = receive_file(conn)
+                mutex.acquire()
                 finished_jobs.add(filename)
+                online_workers[addr] = "online"
                 mutex.release()
-            mutex.acquire()
-            if(len(job_queue) != 0 and msg == STILL_CONNECTED_MESSAGE):
-                job_name = job_queue.pop(0)
-                send_file(job_name, conn)
-                os.system("rm " + job_name)
-                print("SENT")
-            mutex.release()
+           
             #time.sleep(SLEEP_TIME)
     finally:
+        online_workers[addr] = "offline"
         print(f"[{addr}] WORKER disconnected.")
+        thread_out.join()
+        online_workers.pop(addr)
+    print(online_workers)
 
     
 
@@ -123,7 +142,7 @@ def start():
         #if addr[0] in IP_WHITELIST:
         thread = threading.Thread(target = handle_connection, args = (conn, addr))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+        #print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
 
 

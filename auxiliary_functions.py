@@ -54,7 +54,7 @@ def receive_file(conn):
     filename = receive_msg(conn, True)
     #print(filename)
     file_size = int(receive_msg(conn, True)) 
-    #print(file_size)
+   # print(file_size)
     with open(filename, "wb") as file:
         size = 0
         while size < file_size:

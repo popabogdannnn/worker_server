@@ -30,19 +30,6 @@ while not connected:
 
 send_msg(WORKER_MESSAGE, client, True)
 
-def notify_connection(conn):
-    while(True):
-        mutex.acquire()
-        print(evaluating)
-        if(evaluating):
-            send_msg(EVALUATING_MESSAGE, conn, True)
-        else:
-            send_msg(STILL_CONNECTED_MESSAGE, conn, True)
-        mutex.release()
-        time.sleep(0.02)
-
-
-
 def handle_eval(conn):
     jobs = 0
     global evaluating
@@ -73,11 +60,6 @@ def handle_eval(conn):
            # print(time.time() - start)
             
 
-
-
-end_connection_thread = threading.Thread(target = notify_connection, args = [client])
-end_connection_thread.start()
-
 evaluation_thread = threading.Thread(target = handle_eval, args = [client])
 evaluation_thread.start()
 
@@ -87,9 +69,7 @@ while(connected):
     if(msg == SEND_FILE_MESSAGE):
         filename = receive_file(client)
         #print("FILE RECEIVED")
-        mutex.acquire()
         job_queue.append(filename)
-        mutex.release()
     
 send_msg(DISSCONNECT_MESSAGE)
 
