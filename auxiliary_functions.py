@@ -28,12 +28,23 @@ def send_msg(msg, conn, needs_encode = False):
     conn.sendall(msg_length)
     conn.sendall(msg)
 
-def receive_msg(conn, needs_decode = False):
-    msg_length = conn.recv(HEADER, socket.MSG_WAITALL)
+def recvall(conn, SIZE):
+    ret = b""
+    while(len(ret) < SIZE):
+        ret += conn.recv(SIZE - len(ret))
+    return ret
+
+def receive_msg(conn, needs_decode = False, debug = False):
+    msg_length = recvall(conn, HEADER)
+    if(debug):
+        print(msg_length)
     if(msg_length):
         msg_length = msg_length.decode(FORMAT)
         msg_length = int(msg_length)
-        msg = conn.recv(msg_length, socket.MSG_WAITALL)
+        msg = recvall(conn, msg_length)
+        if(debug):
+            print(f"ACTUAL SIZE: {len(msg)}")
+            print(msg)
         if(needs_decode):
             msg = msg.decode(FORMAT)
         return msg
@@ -50,15 +61,15 @@ def send_file(filename, conn):
             send_msg(bytes_read, conn)
             bytes_read = file.read(BUFFER_SIZE)
 
-def receive_file(conn):
-    filename = receive_msg(conn, True)
+def receive_file(conn, debug = False):
+    filename = receive_msg(conn, True, debug)
     #print(filename)
-    file_size = int(receive_msg(conn, True)) 
+    file_size = int(receive_msg(conn, True, debug)) 
    # print(file_size)
     with open(filename, "wb") as file:
         size = 0
         while size < file_size:
-            file_part = receive_msg(conn)
+            file_part = receive_msg(conn, False, debug)
             file.write(file_part)
             size += len(file_part)
             #print("SIZE until now: ", size)

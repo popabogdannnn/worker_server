@@ -82,7 +82,7 @@ def handle_worker_in(conn, addr):
             if(msg == STILL_CONNECTED_MESSAGE):
                 pass
             if msg == SEND_FILE_MESSAGE:
-                filename = receive_file(conn)
+                filename = receive_file(conn, True)
                 mutex.acquire()
                 finished_jobs.add(filename)
                 online_workers[addr] = "online"
