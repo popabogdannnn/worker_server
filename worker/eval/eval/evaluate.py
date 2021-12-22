@@ -99,7 +99,7 @@ else:
             os.system("rm "+ CHECKER_JAIL + "/" + executable_file_name)
             checker_res = run_checker(in_file, out_file, ok_file, execution_time, checker, instance_name)
             test_summary["verdict"] = {
-                "points_awarded" : checker_res["p"] / 100 * points,
+                "points_awarded" : round(checker_res["p"] / 100 * points, 2),
                 "reason" : checker_res["reason"]
             }
             pass

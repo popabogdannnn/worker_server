@@ -32,7 +32,7 @@ def run_checker(in_file, out_file, ok_file, time, checker, instance_name):
         os.system("rm checker_verdict")
         return {"p" : score, "reason" : reason}
     else:
-        check = os.system("diff -qBbEa " + CHECKER_JAIL + "/" + out_file + " " + CHECKER_JAIL + "/" + ok_file)
+        check = os.system("diff -qBbEa " + CHECKER_JAIL + "/" + out_file + " " + CHECKER_JAIL + "/" + ok_file + "> /dev/null")
         if check == 0:
             return {"p" : 100, "reason" : "Raspuns corect!"}
         else:

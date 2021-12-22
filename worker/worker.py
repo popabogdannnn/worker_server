@@ -40,7 +40,7 @@ def handle_eval(conn):
             curr_job = job_queue.pop(0)
         mutex.release()
         if(curr_job):
-            #start = time.time()
+            start = time.time()
             evaluating = True
             print("EVALUATING : ", curr_job)
             jobs += 1
@@ -57,7 +57,7 @@ def handle_eval(conn):
             mutex.release()
             os.system("rm " + job_json)
             evaluating = False
-           # print(time.time() - start)
+            print(time.time() - start)
             
 
 evaluation_thread = threading.Thread(target = handle_eval, args = [client])

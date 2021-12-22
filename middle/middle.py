@@ -17,9 +17,8 @@ from auxiliary_functions import *
 
 HEADER = 64
 DEBUG = False
-BUFFER_SIZE = 512 * 1024
 
-SLEEP_TIME = 0.2 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
+SLEEP_TIME = 0.3 #HOW MUCH DOES AN EVALUATION THREAD SLEEP SEARCHING FOR ITS JOB 
 IP_WHITELIST = [ # MAYBE ADD IT IDK
     SERVER
 ]
@@ -31,7 +30,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 def handle_connection(conn, addr):
-    conn.settimeout(1)
+    conn.settimeout(10)
     try:
         msg = receive_msg(conn, True)
     except Exception as e:
@@ -65,10 +64,10 @@ def handle_worker_out(conn, addr):
 
 def handle_worker_in(conn, addr):
     print(f"[{addr}] WORKER connected.")
+    conn.settimeout(None)
     online_workers[addr] = "online"
     print(online_workers)
     connected = True
-    conn.settimeout(WORKER_TIMEOUT)
     thread_out = threading.Thread(target = handle_worker_out, args = (conn, addr))
     thread_out.start()
     try:
@@ -101,10 +100,11 @@ def handle_worker_in(conn, addr):
 
 def handle_evaluation_request(conn, addr):
     #print(f"[{addr}] is evaluating")
-    mutex.acquire()
     msg = receive_msg(conn, True)
     #print(msg)
     filename = receive_file(conn)
+    
+    mutex.acquire()
     job_queue.append(filename)
     mutex.release()
     
@@ -117,6 +117,7 @@ def handle_evaluation_request(conn, addr):
     while not found:
         mutex.acquire()
         if finished_filename in finished_jobs:
+            finished_jobs.remove(finished_filename)
             found = True
         mutex.release()
         time.sleep(SLEEP_TIME)
@@ -124,12 +125,7 @@ def handle_evaluation_request(conn, addr):
             start = time.time()
            # print("CAN'T FIND JOB " + finished_filename)
     
-    
-    
-    mutex.acquire()
-    finished_jobs.remove(finished_filename)
     send_file(finished_filename, conn)
-    mutex.release()
     os.system("rm " + finished_filename)
 
     print(f"[{addr}] done")
