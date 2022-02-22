@@ -73,7 +73,6 @@ def handle_worker_in(conn, addr):
     try:
         while connected:
             msg = receive_msg(conn, addr)
-            print(msg)
             if(msg == ""):
                 connected = False
                 break
@@ -94,7 +93,6 @@ def handle_worker_in(conn, addr):
         print(f"[{addr}] WORKER disconnected.")
         thread_out.join()
         online_workers.pop(addr)
-    print(online_workers)
 
     
 

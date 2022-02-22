@@ -1,5 +1,6 @@
 ##VA RULA PE CALULCATOARELE CARE EVALUEAZA WORKER
 
+from concurrent.futures import thread
 import socket
 import time
 import sys
@@ -30,10 +31,10 @@ while not connected:
 
 send_msg(WORKER_MESSAGE, client, True)
 
-def handle_eval(conn):
+def handle_eval(conn, run_event):
     jobs = 0
     global evaluating
-    while(True):
+    while(run_event.is_set()):
         mutex.acquire()
         curr_job = None
         if(len(job_queue) != 0):
@@ -60,17 +61,23 @@ def handle_eval(conn):
             print(time.time() - start)
             
 
-evaluation_thread = threading.Thread(target = handle_eval, args = [client])
+
+run_event = threading.Event()
+run_event.set()
+evaluation_thread = threading.Thread(target = handle_eval, args = [client, run_event])
 evaluation_thread.start()
 
-while(connected):
-    msg = receive_msg(client, True)
-   # print(msg)
-    if(msg == SEND_FILE_MESSAGE):
-        filename = receive_file(client)
-        #print("FILE RECEIVED")
-        job_queue.append(filename)
+try:
+    while(connected):
+        msg = receive_msg(client, True)
+       # print(msg)
+        if(msg == SEND_FILE_MESSAGE):
+            filename = receive_file(client)
+            #print("FILE RECEIVED")
+            job_queue.append(filename)
+except KeyboardInterrupt:
+    run_event.clear()
+    evaluation_thread.join()
+    send_msg(DISSCONNECT_MESSAGE, client, True)
+    client.close()
     
-send_msg(DISSCONNECT_MESSAGE)
-
-client.close()
