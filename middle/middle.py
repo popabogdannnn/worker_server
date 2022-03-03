@@ -29,6 +29,9 @@ finished_jobs = set()
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
+run_event = threading.Event()
+run_event.set()
+
 def handle_connection(conn, addr):
     conn.settimeout(10)
     try:
@@ -48,7 +51,7 @@ online_workers = {
 }
 
 def handle_worker_out(conn, addr):
-    while(online_workers[addr] != "offline"):
+    while(online_workers[addr] != "offline" and run_event.is_set()):
         if(online_workers[addr] == "online"):
             mutex.acquire()
             job_name = ""
@@ -60,6 +63,9 @@ def handle_worker_out(conn, addr):
                 send_file(job_name, conn)
                 os.system("rm " + job_name)
             time.sleep(SLEEP_TIME)
+    if(not run_event.is_set()):
+        send_msg(DISSCONNECT_MESSAGE, conn, True)
+    #print("Eu sunt gata")
 
 
 def handle_worker_in(conn, addr):
@@ -71,7 +77,7 @@ def handle_worker_in(conn, addr):
     thread_out = threading.Thread(target = handle_worker_out, args = (conn, addr))
     thread_out.start()
     try:
-        while connected:
+        while connected and run_event.is_set():
             msg = receive_msg(conn, addr)
             if(msg == ""):
                 connected = False
@@ -86,13 +92,13 @@ def handle_worker_in(conn, addr):
                 finished_jobs.add(filename)
                 online_workers[addr] = "online"
                 mutex.release()
-           
             #time.sleep(SLEEP_TIME)
     finally:
         online_workers[addr] = "offline"
         print(f"[{addr}] WORKER disconnected.")
         thread_out.join()
         online_workers.pop(addr)
+
 
     
 
@@ -125,20 +131,26 @@ def handle_evaluation_request(conn, addr):
     
     send_file(finished_filename, conn)
     os.system("rm " + finished_filename)
-
     print(f"[{addr}] done")
 
 
 def start():
     server.listen()
     print(f"[LISTENING] Server is listening on {ADDR}")
-    while True:
-        conn, addr = server.accept()
-        #if addr[0] in IP_WHITELIST:
-        thread = threading.Thread(target = handle_connection, args = (conn, addr))
-        thread.start()
-        #print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
-
+    thread_list = []
+    try:
+        while True:
+            conn, addr = server.accept()
+            #if addr[0] in IP_WHITELIST:
+            thread = threading.Thread(target = handle_connection, args = (conn, addr))
+            thread.start()
+            thread_list.append(thread)
+            #print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+    except KeyboardInterrupt:
+        run_event.clear()
+        for th in thread_list:
+            #print(1)
+            th.join()
 
 
 print("[STARTING] server is starting")

@@ -39,6 +39,8 @@ def handle_eval(conn, run_event):
         curr_job = None
         if(len(job_queue) != 0):
             curr_job = job_queue.pop(0)
+        else:
+            time.sleep(0.3)
         mutex.release()
         if(curr_job):
             start = time.time()
@@ -70,11 +72,19 @@ evaluation_thread.start()
 try:
     while(connected):
         msg = receive_msg(client, True)
-       # print(msg)
+        #print(msg)
         if(msg == SEND_FILE_MESSAGE):
             filename = receive_file(client)
             #print("FILE RECEIVED")
+            mutex.acquire()
             job_queue.append(filename)
+            mutex.release()
+        if(msg == DISSCONNECT_MESSAGE):
+            run_event.clear()
+            evaluation_thread.join()
+            connected = False
+            send_msg(DISSCONNECT_MESSAGE, client, True)
+            client.close()
 except KeyboardInterrupt:
     run_event.clear()
     evaluation_thread.join()
