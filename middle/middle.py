@@ -103,7 +103,7 @@ def handle_worker_in(conn, addr):
     
 
 def handle_evaluation_request(conn, addr):
-    #print(f"[{addr}] is evaluating")
+    print(f"[{addr}] requests evaluation")
     msg = receive_msg(conn, True)
     #print(msg)
     filename = receive_file(conn)
@@ -131,7 +131,7 @@ def handle_evaluation_request(conn, addr):
     
     send_file(finished_filename, conn)
     os.system("rm " + finished_filename)
-    print(f"[{addr}] done")
+    print(f"[{addr}] got the evaluation result")
 
 
 def start():

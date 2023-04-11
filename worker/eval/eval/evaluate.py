@@ -65,41 +65,55 @@ elif checker and checker_compilation_result["result"] == "fail":
 else:
     
     eval_json["compilation"]["error"] = "success"
-    test_lines = read_file("tests/tests.txt").split("\n")
-    while(test_lines[-1] == ""):
-        test_lines.pop()
+    #test_lines = read_file("tests/tests.txt").split("\n")
     
-    for line in test_lines:
-        if(line == ""):
-            continue
-        line = line.split(' ')
-        tag = line[0]
-        points = int(line[1])
+    test_tags = load_tests()
 
-        in_file_tests = tag + "-" + io_filename + ".in"
-        ok_file_tests = tag + "-" + io_filename + ".ok"
-        in_file = io_filename + ".in"
-        out_file = io_filename + ".out"
-        ok_file = io_filename + ".ok"
+    cnt = 0
+    for tag in test_tags:
+
+        #print(tag)
+        in_file_tests = tag + ".in"
+        ok_file_tests = tag + ".ok"
         
+        if stdio:
+            random_file_name = generate_random_string(10)
+            in_file = random_file_name + ".in"
+            out_file = random_file_name + ".out"
+        else:
+            in_file = io_filename + ".in"
+            out_file = io_filename + ".out"
+        ok_file = io_filename + ".ok"
+
         os.system("rm -rf " + EXECUTION_JAIL +"/*")
         os.system("cp tests/" + in_file_tests + " " + EXECUTION_JAIL + "/" + in_file)
         os.system("echo -n > " + EXECUTION_JAIL + "/" + out_file)
-        os.system("cp " + executable_file_name + " " + EXECUTION_JAIL +"/")
+        os.system("cp " + executable_file_name + " " + EXECUTION_JAIL + "/")
+        exception_occured = False
+        
+        try:
+            run_info = run_sandbox(executable_file_name, stdio, memory, stack_memory, execution_time, in_file, out_file, instance_name)
+        except:
+            exception_occured = True
+        # !!! BUG NEREZOLVAT DACA CHECKER_JAIL != EXECUTION_JAIL
+        test_summary = {
 
-        run_info = run_sandbox(executable_file_name, stdio, memory, stack_memory, execution_time, in_file, out_file, instance_name)
-      
-        # !!! BUG NEREZOLVAT DACA CHECKER_JAIL != EXECUTION_JAIL 
-      
-        test_summary = copy.deepcopy(run_info)
-        del test_summary["result"]
-        if isinstance(run_info["result"], dict) and "Success" in run_info["result"].keys():
+        } 
+        if(exception_occured == False):
+            test_summary = copy.deepcopy(run_info)
+            del test_summary["result"]
+        if(exception_occured):
+            test_summary["verdict"] = {
+                "points_awarded" : 0,
+                "reason" : "Exceptie (poate nu sunt vazute toate testele descrise?)"
+            }
+        elif isinstance(run_info["result"], dict) and "Success" in run_info["result"].keys():
             os.system("cp tests/" + in_file_tests + " " + CHECKER_JAIL + "/" + in_file)
             os.system("cp tests/" + ok_file_tests + " " + CHECKER_JAIL + "/" + ok_file)
             os.system("rm "+ CHECKER_JAIL + "/" + executable_file_name)
             checker_res = run_checker(in_file, out_file, ok_file, execution_time, checker, instance_name)
             test_summary["verdict"] = {
-                "points_awarded" : round(checker_res["p"] / 100 * points, 2),
+                "points_awarded" : checker_res["p"],
                 "reason" : checker_res["reason"]
             }
             pass
@@ -112,10 +126,11 @@ else:
                     test_summary["verdict"]["reason"] = str(key) + " " + str(value)
             else:
                 test_summary["verdict"]["reason"] = str(run_info["result"])
-        eval_json[tag] = test_summary   
+        eval_json[cnt] = test_summary 
+        cnt += 1  
 
 with open("../" + submission_id + ".json", "w") as f:
-    json.dump(eval_json, f)
+    json.dump(eval_json, f, indent = 4)
 
 os.system("rm " + code_file_name)
 if compilation_result["result"] == "success":
@@ -126,5 +141,6 @@ if checker:
 os.system("rm -rf user_checker/*")
 os.system("rm -rf tests/*")
 os.system("rm submission_data.json")
+os.system("rm *.json")
 
 

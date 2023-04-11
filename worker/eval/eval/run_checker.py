@@ -24,15 +24,25 @@ def run_checker(in_file, out_file, ok_file, time, checker, instance_name):
         with open("checker_verdict", "r") as verdict:
             lines = verdict.readlines()    
             if(len(lines) >= 1):
-                score = int(lines[0])
+                try:
+                    score = int(lines[0])
+                except:
+                    score = 0
+                    pass
             if(len(lines) >= 2):
                 reason = lines[1]
+        
+        score = max(score, 0)
+        score = min(score, 100)
+
+        if(len(reason) > 128):
+            reason = reason[:128]
 
         os.system("rm checker_data.json")
         os.system("rm checker_verdict")
         return {"p" : score, "reason" : reason}
     else:
-        check = os.system("diff -qBbEa " + CHECKER_JAIL + "/" + out_file + " " + CHECKER_JAIL + "/" + ok_file + "> /dev/null")
+        check = os.system("diff -qBbEa " + CHECKER_JAIL + "/" + out_file + " " + CHECKER_JAIL + "/" + ok_file + " > /dev/null")
         if check == 0:
             return {"p" : 100, "reason" : "Raspuns corect!"}
         else:

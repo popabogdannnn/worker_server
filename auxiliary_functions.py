@@ -57,22 +57,18 @@ def send_file(filename, conn):
     with open(filename, "rb") as file:
         bytes_read = file.read(BUFFER_SIZE)
         while(bytes_read):
-            #print(bytes_read)
             send_msg(bytes_read, conn)
             bytes_read = file.read(BUFFER_SIZE)
 
 def receive_file(conn, debug = False):
     filename = receive_msg(conn, True, debug)
-    #print(filename)
     file_size = int(receive_msg(conn, True, debug)) 
-   # print(file_size)
     with open(filename, "wb") as file:
         size = 0
         while size < file_size:
             file_part = receive_msg(conn, False, debug)
             file.write(file_part)
             size += len(file_part)
-            #print("SIZE until now: ", size)
             
     return filename
         

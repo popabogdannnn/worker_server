@@ -1,4 +1,4 @@
-unzip submission.zip -d ./ >/dev/null
+unzip -o submission.zip -d ./ >/dev/null
 
 rm submission.zip
 

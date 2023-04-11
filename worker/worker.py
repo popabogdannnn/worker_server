@@ -34,13 +34,18 @@ send_msg(WORKER_MESSAGE, client, True)
 def handle_eval(conn, run_event):
     jobs = 0
     global evaluating
+    x = 0
     while(run_event.is_set()):
+        x += 1
+        if(x == 10):
+            print("CAUT!")
+            x = 0
         mutex.acquire()
         curr_job = None
         if(len(job_queue) != 0):
             curr_job = job_queue.pop(0)
         else:
-            time.sleep(0.3)
+            time.sleep(1)
         mutex.release()
         if(curr_job):
             start = time.time()
@@ -72,10 +77,10 @@ evaluation_thread.start()
 try:
     while(connected):
         msg = receive_msg(client, True)
-        #print(msg)
+        print(msg)
         if(msg == SEND_FILE_MESSAGE):
             filename = receive_file(client)
-            #print("FILE RECEIVED")
+            print("FILE RECEIVED")
             mutex.acquire()
             job_queue.append(filename)
             mutex.release()
